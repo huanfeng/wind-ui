@@ -26,8 +26,12 @@ func TestShowToast(t *testing.T) {
 	if toast.IsShowing() {
 		t.Error("expected toast not showing after dismiss")
 	}
-	if len(root.Children()) != 0 {
-		t.Errorf("expected 0 children after dismiss, got %d", len(root.Children()))
+	// Overlay stays in tree but is set to Gone (avoids stale canvas pixels).
+	if len(root.Children()) != 1 {
+		t.Errorf("expected 1 overlay child (Gone) after dismiss, got %d", len(root.Children()))
+	}
+	if root.Children()[0].GetVisibility() != core.Gone {
+		t.Error("expected overlay to be Gone after dismiss")
 	}
 }
 

@@ -220,6 +220,15 @@ func (e *win32NativeEdit) Detach() {
 	e.hidden = true
 }
 
+// Hide explicitly hides the native edit control (e.g. when the parent page
+// becomes invisible due to a tab switch).
+func (e *win32NativeEdit) Hide() {
+	if !e.hidden {
+		procShowWindow.Call(e.hwnd, SW_HIDE)
+		e.hidden = true
+	}
+}
+
 // UpdatePosition recalculates the native EDIT control's position and size
 // based on the node's current layout bounds. It accounts for:
 // - Absolute position (walking parent bounds)

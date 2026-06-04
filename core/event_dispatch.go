@@ -67,6 +67,22 @@ func buildHitChain(node *Node, point Point, offset Point) []*Node {
 		return nil
 	}
 
+	// Non-modal nodes (e.g. Toast overlay) should not intercept events.
+	// Skip adding them to the chain, but still recurse into their children
+	// so interactive elements inside them (e.g. Snackbar action button)
+	// remain reachable.
+	if node.GetData("nonModal") != nil {
+		childOffset := Point{X: offset.X + b.X, Y: offset.Y + b.Y}
+		for i := len(node.Children()) - 1; i >= 0; i-- {
+			child := node.Children()[i]
+			childChain := buildHitChain(child, point, childOffset)
+			if len(childChain) > 0 {
+				return childChain
+			}
+		}
+		return nil
+	}
+
 	chain := []*Node{node}
 	childOffset := Point{X: offset.X + b.X, Y: offset.Y + b.Y}
 	// Check children in reverse order (topmost/last child first)

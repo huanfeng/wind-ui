@@ -54,14 +54,14 @@ func NewGGCanvas(width, height int, textRenderer core.TextRenderer) *GGCanvas {
 	}
 }
 
-// NewGGCanvasForImage creates a GGCanvas with a fresh cleared context at the
-// same dimensions as img. The img parameter is only used for sizing — gogpu/gg
-// contexts own their pixel buffer internally. Call Target() to get the canvas
-// result as *image.RGBA.
+// NewGGCanvasForImage creates a GGCanvas backed by the same pixel buffer as img
+// using zero-copy aliasing (NewPixmapFromBuffer). Writes through the canvas go
+// directly into img.Pix without allocation or copy.
 func NewGGCanvasForImage(img *image.RGBA, textRenderer core.TextRenderer) *GGCanvas {
 	bounds := img.Bounds()
 	w, h := bounds.Dx(), bounds.Dy()
-	dc := foggg.NewContext(w, h) // fresh cleared context
+	pm := foggg.NewPixmapFromBuffer(img.Pix, w, h)
+	dc := foggg.NewContextForPixmap(pm)
 	return &GGCanvas{
 		dc:           dc,
 		textRenderer: textRenderer,
@@ -71,13 +71,14 @@ func NewGGCanvasForImage(img *image.RGBA, textRenderer core.TextRenderer) *GGCan
 	}
 }
 
-// NewGGCanvasRetained creates a GGCanvas pre-populated with the pixels from
-// img (previous frame). Only dirty regions are cleared and repainted, while
-// the rest of the frame is preserved.
+// NewGGCanvasRetained creates a GGCanvas that reuses the pixel buffer from img
+// (previous frame) via zero-copy aliasing. Dirty regions can be cleared and
+// repainted while the rest of the frame is preserved in-place.
 func NewGGCanvasRetained(img *image.RGBA, textRenderer core.TextRenderer) *GGCanvas {
 	bounds := img.Bounds()
 	w, h := bounds.Dx(), bounds.Dy()
-	dc := foggg.NewContextForImage(img) // imports previous frame pixels
+	pm := foggg.NewPixmapFromBuffer(img.Pix, w, h)
+	dc := foggg.NewContextForPixmap(pm)
 	return &GGCanvas{
 		dc:           dc,
 		textRenderer: textRenderer,
@@ -444,13 +445,7 @@ func (c *GGCanvas) targetRGBA() *image.RGBA {
 		return c.sharedTarget
 	}
 	pm := c.dc.ResizeTarget()
-	data := pm.Data()
-	w, h := pm.Width(), pm.Height()
-	c.sharedTarget = &image.RGBA{
-		Pix:    data,
-		Stride: w * 4,
-		Rect:   image.Rect(0, 0, w, h),
-	}
+	c.sharedTarget = pm.ImageView()
 	return c.sharedTarget
 }
 

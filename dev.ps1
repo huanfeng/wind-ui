@@ -6,6 +6,7 @@
 #   .\dev.ps1 all       # run all demos
 
 $demos = @(
+    @{ Name = "fullshowcase";  Desc = "FULL REGRESSION: all widgets in one window (5 tabs)" }
     @{ Name = "hello";         Desc = "Basic window, button click, XML layout" }
     @{ Name = "showcase";      Desc = "Widget showcase: Button, CheckBox, Switch, Radio, Progress" }
     @{ Name = "edittext";      Desc = "Native EditText, ScrollView, text input" }

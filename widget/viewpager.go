@@ -149,13 +149,32 @@ func (vp *ViewPager) rebuildPages() {
 }
 
 // updateVisibility shows only the current page and hides all others.
+// Native edit controls on hidden pages are explicitly hidden so they don't
+// remain visible on screen after a tab switch.
 func (vp *ViewPager) updateVisibility() {
 	for i, page := range vp.pages {
 		if i == vp.currentPage {
 			page.Node().SetVisibility(core.Visible)
 		} else {
 			page.Node().SetVisibility(core.Gone)
+			hideNativeEdits(page.Node())
 		}
+	}
+}
+
+// nativeEditHide is implemented by platform native edit controls that can be
+// explicitly hidden when their parent page becomes invisible.
+type nativeEditHide interface {
+	Hide()
+}
+
+// hideNativeEdits walks the node tree and hides any attached native edit controls.
+func hideNativeEdits(n *core.Node) {
+	if ne, ok := n.GetData("nativeEdit").(nativeEditHide); ok {
+		ne.Hide()
+	}
+	for _, child := range n.Children() {
+		hideNativeEdits(child)
 	}
 }
 

@@ -655,6 +655,7 @@ func (w *win32Window) SetContentView(root *core.Node) {
 	w.mu.Lock()
 	w.contentView = root
 	w.mu.Unlock()
+	root.SetInvalidator(w)
 	w.Invalidate()
 }
 

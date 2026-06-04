@@ -87,10 +87,19 @@ func (t *Toast) Dismiss() {
 	case t.dismissCh <- struct{}{}:
 	default:
 	}
-	if t.overlayNode != nil && t.overlayNode.Parent() != nil {
-		t.overlayNode.Parent().RemoveChild(t.overlayNode)
+	// Hide the overlay instead of removing it from the tree.
+	// Removing mid-paint leaves stale canvas pixels because PaintNodeDirty
+	// won't re-visit a removed node. Setting Gone lets the overlay paint a
+	// transparent background to clear its region, then subsequent frames
+	// skip it entirely via the visibility check in PaintNodeRecursive.
+	if t.overlayNode != nil {
+		t.overlayNode.SetVisibility(core.Gone)
+		// Trigger a repaint so the overlay's transparent background is drawn
+		// and the stale canvas pixels are cleared.
+		if inv := t.overlayNode.GetInvalidator(); inv != nil {
+			inv.Invalidate()
+		}
 	}
-	t.overlayNode = nil
 }
 
 func (t *Toast) show(root *core.Node) {
@@ -137,10 +146,14 @@ func (t *Toast) show(root *core.Node) {
 	go func() {
 		select {
 		case <-time.After(dur):
-			// Post dismiss to main thread via MarkDirty + lazy check
+			// Post dismiss to main thread: set showing=false, mark dirty,
+			// and trigger a repaint via the window's Invalidate().
 			t.showing = false
 			if t.overlayNode != nil {
 				t.overlayNode.MarkDirty()
+				if inv := t.overlayNode.GetInvalidator(); inv != nil {
+					inv.Invalidate()
+				}
 			}
 		case <-t.dismissCh:
 			// Already dismissed
@@ -168,7 +181,12 @@ func (p *toastOverlayPainter) Measure(node *core.Node, ws, hs core.MeasureSpec) 
 func (p *toastOverlayPainter) Paint(node *core.Node, canvas core.Canvas) {
 	t := p.t
 	if !t.showing {
-		// Auto-dismiss triggered from goroutine — clean up
+		// Auto-dismiss triggered from goroutine — paint transparent background
+		// to clear stale canvas pixels, then set overlay to Gone so subsequent
+		// frames skip it via PaintNodeRecursive's visibility check.
+		b := node.Bounds()
+		canvas.DrawRect(core.Rect{Width: b.Width, Height: b.Height},
+			&core.Paint{Color: color.RGBA{A: 0}, DrawStyle: core.PaintFill})
 		t.Dismiss()
 		return
 	}

@@ -670,3 +670,28 @@ func (n *Node) FindViewById(id string) View {
 	}
 	return node.view
 }
+
+// ---------- Invalidator ----------
+
+// Invalidator is implemented by objects that can trigger a repaint
+// (e.g. platform Window). Stored on the root node so widgets deep
+// in the tree can request a repaint without importing the platform package.
+type Invalidator interface {
+	Invalidate()
+}
+
+// SetInvalidator stores an Invalidator on this node.
+func (n *Node) SetInvalidator(invalidator Invalidator) {
+	n.SetData("invalidator", invalidator)
+}
+
+// GetInvalidator walks up the parent chain to find the nearest Invalidator.
+// Returns nil if none found.
+func (n *Node) GetInvalidator() Invalidator {
+	for node := n; node != nil; node = node.parent {
+		if inv, ok := node.GetData("invalidator").(Invalidator); ok {
+			return inv
+		}
+	}
+	return nil
+}
