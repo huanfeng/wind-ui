@@ -21,7 +21,7 @@ func NewEditText(hint string) *EditText {
 	et.node.SetPainter(&editTextPainter{})
 	et.node.SetStyle(&core.Style{
 		FontSize:     14,
-		BorderWidth:  1,
+		BorderWidth:  2,
 		CornerRadius: 4,
 	})
 	et.node.SetData("hint", hint)
@@ -89,23 +89,12 @@ func (p *editTextPainter) Paint(node *core.Node, canvas core.Canvas) {
 	b := node.Bounds()
 	localRect := core.Rect{Width: b.Width, Height: b.Height}
 
-	// Background (white).
-	bgColor := s.BackgroundColor
-	if bgColor.A == 0 {
-		bgColor = color.RGBA{R: 255, G: 255, B: 255, A: 255}
-	}
-	bgPaint := &core.Paint{Color: bgColor, DrawStyle: core.PaintFill}
-	if s.CornerRadius > 0 {
-		canvas.DrawRoundRect(localRect, s.CornerRadius, bgPaint)
-	} else {
-		canvas.DrawRect(localRect, bgPaint)
-	}
-
-	// Border (gray).
+	// Draw border first (stroke is centered on path, half is covered by fill),
+	// then draw background inset so the full border width remains visible.
 	if s.BorderWidth > 0 {
 		borderColor := s.BorderColor
 		if borderColor.A == 0 {
-			borderColor = color.RGBA{R: 200, G: 200, B: 200, A: 255}
+			borderColor = color.RGBA{R: 158, G: 158, B: 158, A: 255} // #9E9E9E
 		}
 		borderPaint := &core.Paint{
 			Color:       borderColor,
@@ -116,6 +105,22 @@ func (p *editTextPainter) Paint(node *core.Node, canvas core.Canvas) {
 			canvas.DrawRoundRect(localRect, s.CornerRadius, borderPaint)
 		} else {
 			canvas.DrawRect(localRect, borderPaint)
+		}
+	}
+
+	// Background (white) — inset by half border width so fill doesn't cover the border.
+	bgColor := s.BackgroundColor
+	if bgColor.A == 0 {
+		bgColor = color.RGBA{R: 255, G: 255, B: 255, A: 255}
+	}
+	bgPaint := &core.Paint{Color: bgColor, DrawStyle: core.PaintFill}
+	half := s.BorderWidth / 2
+	bgRect := core.Rect{X: half, Y: half, Width: b.Width - s.BorderWidth, Height: b.Height - s.BorderWidth}
+	if bgRect.Width > 0 && bgRect.Height > 0 {
+		if s.CornerRadius > 0 {
+			canvas.DrawRoundRect(bgRect, s.CornerRadius, bgPaint)
+		} else {
+			canvas.DrawRect(bgRect, bgPaint)
 		}
 	}
 

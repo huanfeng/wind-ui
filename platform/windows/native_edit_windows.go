@@ -137,7 +137,7 @@ func editSubclassProc(hwnd, msg, wParam, lParam uintptr) uintptr {
 
 // editInset is the pixel inset from the node bounds for the native EDIT
 // so the framework's custom border is visible around it.
-const editInset = 2.0
+const editInset = 4.0
 
 // win32NativeEdit wraps a Win32 EDIT control and implements platform.NativeEditText.
 type win32NativeEdit struct {
