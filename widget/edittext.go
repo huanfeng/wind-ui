@@ -94,7 +94,7 @@ func (p *editTextPainter) Paint(node *core.Node, canvas core.Canvas) {
 	if s.BorderWidth > 0 {
 		borderColor := s.BorderColor
 		if borderColor.A == 0 {
-			borderColor = color.RGBA{R: 158, G: 158, B: 158, A: 255} // #9E9E9E
+			borderColor = color.RGBA{R: 117, G: 117, B: 117, A: 255} // #757575
 		}
 		borderPaint := &core.Paint{
 			Color:       borderColor,

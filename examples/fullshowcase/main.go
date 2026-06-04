@@ -505,18 +505,14 @@ func (a *showcasePagerAdapter) buildInputPage() core.View {
 	page.AddChild(sectionLabel("EditText"))
 	etName := widget.NewEditText("Name")
 	etName.SetId("et_name")
-	etName.Node().SetStyle(&core.Style{
-		Width:  dim(core.DimensionMatchParent),
-		Height: dimVal(36),
-	})
+	etName.Node().GetStyle().Width = dim(core.DimensionMatchParent)
+	etName.Node().GetStyle().Height = dimVal(36)
 	page.AddChild(etName.Node())
 
 	etPassword := widget.NewEditText("Password")
 	etPassword.SetId("et_password")
-	etPassword.Node().SetStyle(&core.Style{
-		Width:  dim(core.DimensionMatchParent),
-		Height: dimVal(36),
-	})
+	etPassword.Node().GetStyle().Width = dim(core.DimensionMatchParent)
+	etPassword.Node().GetStyle().Height = dimVal(36)
 	page.AddChild(etPassword.Node())
 
 	// -- CheckBox --
