@@ -116,6 +116,19 @@ func (p *checkBoxPainter) Paint(node *core.Node, canvas core.Canvas) {
 	// Position box vertically centered
 	boxX := 0.0
 	boxY := (b.Height - boxSize) / 2
+	boxRect := core.Rect{X: boxX, Y: boxY, Width: boxSize, Height: boxSize}
+
+	// Clear the box area first to prevent residual pixels from previous state.
+	// Use the parent's background color if available, otherwise transparent.
+	bgColor := color.RGBA{A: 0}
+	if s.BackgroundColor.A > 0 {
+		bgColor = s.BackgroundColor
+	} else if parent := node.Parent(); parent != nil {
+		if ps := parent.GetStyle(); ps != nil && ps.BackgroundColor.A > 0 {
+			bgColor = ps.BackgroundColor
+		}
+	}
+	canvas.DrawRoundRect(boxRect, 3*scale, &core.Paint{Color: bgColor, DrawStyle: core.PaintFill})
 
 	primaryColor := theme.CurrentColors().Primary
 
